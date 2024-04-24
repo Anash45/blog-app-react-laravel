@@ -1,8 +1,9 @@
 <?php
-
+use App\Http\Controllers\PostController;
+use App\Http\Controllers\CommentController;
 use Illuminate\Support\Facades\Route;
 
-Route::group(['prefix' => 'v1'], function () {
+Route::group(['prefix' => 'v1', 'namespace' => 'App\Http\Controllers'], function () {
     // Categories endpoints
     Route::get('/categories', 'CategoryController@index');
     Route::post('/categories', 'CategoryController@store');
@@ -23,6 +24,8 @@ Route::group(['prefix' => 'v1'], function () {
     Route::get('/posts/{id}', 'PostController@show');
     Route::put('/posts/{id}', 'PostController@update');
     Route::delete('/posts/{id}', 'PostController@destroy');
+    // Posts endpoints
+    Route::get('/users/{userId}/posts', [PostController::class, 'postsForUser']);
 
     // Comments endpoints
     Route::get('/comments', 'CommentController@index');
@@ -30,4 +33,6 @@ Route::group(['prefix' => 'v1'], function () {
     Route::get('/comments/{id}', 'CommentController@show');
     Route::put('/comments/{id}', 'CommentController@update');
     Route::delete('/comments/{id}', 'CommentController@destroy');
+    Route::get('/posts/{postId}/comments', [CommentController::class, 'commentsForPost']);
+
 });
