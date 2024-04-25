@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Post;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -10,34 +11,46 @@ class PostController extends Controller
 {
     public function index()
     {
-        $posts = Post::all();
+        $posts = Post::with('user:id,name')->get(); // Eager load the user relationship with only id and name columns
         return response()->json($posts);
     }
 
     public function show($id)
     {
-        $post = Post::findOrFail($id);
-        return response()->json($post);
-    }
-    public function postsForUser($userId)
-    {
-        $posts = Post::where('user_id', $userId)->get();
-
-        if ($posts->isEmpty()) {
-            return response()->json([
-                'status' => 'error',
-                'code' => 404,
-                'message' => 'No posts found for the specified user',
-            ], 404);
-        }
+        $post = Post::with('user:id,name')->findOrFail($id);
 
         return response()->json([
             'status' => 'success',
             'code' => 200,
-            'message' => 'Posts retrieved successfully',
-            'data' => $posts,
+            'message' => 'Post retrieved successfully',
+            'data' => $post,
         ]);
     }
+    public function postsForUser($userId)
+{
+    $user = User::findOrFail($userId);
+    $posts = $user->posts()->get(); // Fetch all posts for the user
+
+    if ($posts->isEmpty()) {
+        return response()->json([
+            'status' => 'error',
+            'code' => 404,
+            'message' => 'No posts found for the specified user',
+        ], 404);
+    }
+
+    return response()->json([
+        'status' => 'success',
+        'code' => 200,
+        'message' => 'Posts retrieved successfully for user ' . $user->name,
+        'user' => [
+            'id' => $user->id,
+            'name' => $user->name,
+        ],
+        'posts' => $posts,
+    ]);
+}
+
 
     public function store(Request $request)
     {
@@ -48,9 +61,9 @@ class PostController extends Controller
             'content' => 'required|string',
         ], [
             'user_id.required' => 'The user ID field is required.',
-            'user_id.exists' => 'The user ID does not exist.',
+            'user_id.exists' => 'The selected user ID is invalid.',
             'category_id.required' => 'The category ID field is required.',
-            'category_id.exists' => 'The category ID does not exist.',
+            'category_id.exists' => 'The selected category ID is invalid.',
             'title.required' => 'The title field is required.',
             'title.string' => 'The title must be a string.',
             'title.max' => 'The title may not be greater than 255 characters.',
@@ -58,7 +71,7 @@ class PostController extends Controller
             'content.string' => 'The content must be a string.',
         ]);
 
-        // If validation fails, return error response
+        // If validation fails, return error response with specific validation error messages
         if ($validator->fails()) {
             return response()->json([
                 'status' => 'error',
@@ -83,6 +96,7 @@ class PostController extends Controller
             'data' => $post,
         ], 201);
     }
+
 
     public function update(Request $request, $id)
     {

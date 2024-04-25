@@ -10,15 +10,28 @@ class CommentController extends Controller
 {
     public function index()
     {
-        $comments = Comment::all();
-        return response()->json($comments);
+        $comments = Comment::with('user:id,name')->get();
+
+        return response()->json([
+            'status' => 'success',
+            'code' => 200,
+            'message' => 'Comments retrieved successfully',
+            'data' => $comments,
+        ]);
     }
 
     public function show($id)
     {
-        $comment = Comment::findOrFail($id);
-        return response()->json($comment);
+        $comment = Comment::with('user:id,name')->findOrFail($id);
+
+        return response()->json([
+            'status' => 'success',
+            'code' => 200,
+            'message' => 'Comment retrieved successfully',
+            'data' => $comment,
+        ]);
     }
+
 
     public function store(Request $request)
     {
@@ -63,7 +76,7 @@ class CommentController extends Controller
 
     public function commentsForPost($postId)
     {
-        $comments = Comment::where('post_id', $postId)->get();
+        $comments = Comment::with('user:id,name')->where('post_id', $postId)->get();
 
         if ($comments->isEmpty()) {
             return response()->json([

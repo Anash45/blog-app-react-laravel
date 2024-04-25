@@ -19,6 +19,19 @@ class CategoryController extends Controller
         $category = Category::findOrFail($id);
         return response()->json($category);
     }
+    public function showPosts($id)
+    {
+        $category = Category::findOrFail($id);
+        $posts = $category->posts()->with('user:id,name')->get(); // Include the user relationship
+
+        return response()->json([
+            'status' => 'success',
+            'code' => 200,
+            'message' => 'Posts retrieved successfully for category ' . $category->name,
+            'data' => $posts,
+        ]);
+    }
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
